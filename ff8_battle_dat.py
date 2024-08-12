@@ -43,7 +43,7 @@ def read_tim(ptr):
     cluts = []
     for _ in range(num_cluts):
         cluts.append(read_clut(fd.tell()))
-        
+
     print("Clut parsed: " + str(len(cluts)) + " cluts")
 
     img_size = struct.unpack('I', fd.read(4))[0]
@@ -53,14 +53,18 @@ def read_tim(ptr):
     img_h = struct.unpack('H', fd.read(2))[0]
 
     # read image data
-    img_buffer = fd.read(img_w*img_h)
+    img_buffer = fd.read(img_w * img_h)
     print('TIM: ' + str(img_w) + 'x' + str(img_h))
-    
+
     # create image
     img = bpy.data.images.new('TIM', img_w, img_h)
     img.pixels = [0] * img_w * img_h * 4
-    for i, pixel in enumerate(img_buffer):
-        img.pixels[i*4:i*4+4] = cluts[pixel // 256][pixel % 256]
+    for y in range(img_h):
+        for x in range(img_w):
+            i = (y * img_w + x) * 4
+            flipped_i = ((img_h - 1 - y) * img_w + x) * 4
+            r, g, b, a = cluts[img_buffer[i // 4] // 256][img_buffer[i // 4] % 256]
+            img.pixels[flipped_i:flipped_i + 4] = [r / 255.0, g / 255.0, b / 255.0, a / 255.0]
 
     return 0
 
